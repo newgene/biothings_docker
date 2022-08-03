@@ -97,7 +97,7 @@ demohub-test:
     -t demohub:$(BIOTHINGS_VERSION)$(PYTHON_VERSION) .
 
 start-demohub:
-	docker-compose --file tests/hubapi/demohub/docker-compose.yml  up
+	docker-compose --file tests/hubapi/demohub/docker-compose.yml  up -d
 
 stop-demohub:
 	docker-compose --file tests/hubapi/demohub/docker-compose.yml down

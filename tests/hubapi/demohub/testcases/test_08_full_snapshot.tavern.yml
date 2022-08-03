@@ -162,7 +162,7 @@ stages:
                 note: some note
                 old:
                   _version: null
-                  _count: 0
+                  _count: null
                 new:
                   _version: !anystr
                   _count: !anyint

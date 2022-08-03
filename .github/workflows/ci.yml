@@ -1,0 +1,79 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "*", "!main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILD_EXTRA_OPTS: '--force-rm'
+      STUDIO_VERSION: master
+      BIOTHINGS_VERSION: master
+      BIOTHINGS_REPOSITORY: https://github.com/newgene/biothings.api.git
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      SNAPSHOT_BUCKET_NAME: ${{ secrets.SNAPSHOT_BUCKET_NAME }}
+      PUBLISH_BUCKET_NAME: ${{ secrets.PUBLISH_BUCKET_NAME }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+      ES_HEAP_SIZE: 512m
+      PYTHONPATH: './:$PYTHONPATH'
+    steps:
+    - uses: actions/checkout@v3
+    - name: Print BIOTHINGS_VERSION
+      run: echo $BIOTHINGS_VERSION
+    - name: Build the Docker image
+      run: make demohub
+    - name: Create config file
+      uses: cuchi/jinja2-action@v1.2.0
+      with:
+        template: .github/workflows/config.py.j2
+        output_file: tests/hubapi/demohub/biothing_studio/config.py
+        strict: true
+        variables: |
+          AWS_ACCESS_KEY=$AWS_ACCESS_KEY
+          AWS_SECRET_KEY=$AWS_SECRET_KEY
+          SNAPSHOT_BUCKET_NAME=$SNAPSHOT_BUCKET_NAME
+          PUBLISH_BUCKET_NAME=$PUBLISH_BUCKET_NAME
+          AWS_REGION=$AWS_REGION
+    - name: Create ./hooks folder
+      run: mkdir tests/hubapi/demohub/biothing_studio/hooks
+    - name: Create ssh private key file
+      run: |
+        echo "$SSH_PRIVATE_KEY" > tests/hubapi/demohub/biothing_studio/bin/ssh_host_key
+    - name: Create ssh public key file
+      run: |
+        echo "$SSH_PUBLIC_KEY" > tests/hubapi/demohub/biothing_studio/bin/ssh_host_key.pub
+    - name: Run the demohub
+      run: make start-demohub
+    - name: Install pytest
+      run: pip install -U pip && pip install pytest tavern
+    - name: Create config file
+      run: |
+        cat > tests/hubapi/demohub/testcases/config.yaml <<EOF
+        name: Common configurations
+        variables:
+          hub_api_host: http://localhost:7080
+          source_url: http://localhost:7080/source/uniprot_species
+          command_url: http://localhost:7080/command
+          buildconf_url: http://localhost:7080/buildconf
+          build_manager_url: http://localhost:7080/build_manager
+          build_url: http://localhost:7080/builds
+          plugin_id: pharmgkb
+          plugin_url: https://github.com/sirloon/pharmgkb.git
+          es_primary_host: localhost:9200
+          es_secondary_host: elasticsearch_2:9200 # it should be "localhost:9300" if you run docker with option "--net=host"
+          sleep_short_time: 5
+          sleep_long_time: 20
+          sleep_very_long_time: 90
+        EOF
+    - name: Show docker status
+      run: docker ps -a
+    - name: Waiting for hub is ready
+      run: docker run --rm --network container:biothings-demohub nicolaka/netshoot curl -s --retry 30 --retry-delay 10 --retry-connrefused http://biothings-demohub:7080
+    - name: Run tests
+      run: make run-test-demohub

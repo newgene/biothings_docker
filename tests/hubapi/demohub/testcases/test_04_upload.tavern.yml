@@ -22,7 +22,7 @@ stages:
             release: !anystr
             data_folder: !anystr
             dumper:
-              name: hub.dataload.sources.uniprot.dumper.UniprotSpeciesDumper
+              name: uniprot.dumper.UniprotSpeciesDumper
               bases:
                 - biothings.hub.dataload.dumper.FTPDumper
               manual: false
@@ -36,7 +36,7 @@ stages:
                 data_folder: !anystr
                 count: !anyint
                 uploader:
-                  name: hub.dataload.sources.uniprot.uploader.UniprotSpeciesUploader
+                  name: uniprot.uploader.UniprotSpeciesUploader
                   bases:
                     - biothings.hub.dataload.uploader.BaseSourceUploader
                   dummy: false
