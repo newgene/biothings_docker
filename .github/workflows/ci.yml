@@ -74,6 +74,6 @@ jobs:
     - name: Show docker status
       run: docker ps -a
     - name: Waiting for hub is ready
-      run: docker run --rm --network container:biothings-demohub nicolaka/netshoot curl -s --retry 15 --retry-delay 10 --retry-connrefused http://biothings-demohub:7080
+      run: docker run --rm --network container:biothings-demohub nicolaka/netshoot curl -s --retry 30 --retry-delay 10 --retry-connrefused http://biothings-demohub:7080
     - name: Run tests
       run: make run-test-demohub
