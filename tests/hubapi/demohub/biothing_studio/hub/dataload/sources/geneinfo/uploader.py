@@ -1,7 +1,7 @@
 import os
 
 import biothings.hub.dataload.uploader as uploader
-import biothings.hub.dataload.storage as storage
+import biothings.utils.storage as storage
 from .parser import parse_geneinfo_taxid
 
 class GeneInfoUploader(uploader.BaseSourceUploader):
