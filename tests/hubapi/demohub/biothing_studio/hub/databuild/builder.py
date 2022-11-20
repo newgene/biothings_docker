@@ -1,5 +1,5 @@
 from biothings.hub.databuild.builder import DataBuilder
-from biothings.hub.dataload.storage import UpsertStorage
+from biothings.utils.storage import UpsertStorage
 from biothings.utils.mongo import get_target_db, doc_feeder
 
 from hub.databuild.mapper import LineageMapper
